@@ -1,22 +1,18 @@
-import logo from './logo.svg';
-import './App.css';
+import "./App.css";
+import React from "react";
+import WinboxComponent from "./WinboxComponent"; // 適切なパスを設定
+import WinboxTabulatorComponent from "./WinboxTabulatorComponent"; // 適切なパスを設定
+import { ChakraProvider, Button, Select } from "@chakra-ui/react";
 
 function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
+        <p>Click the button below to open a Winbox window.</p>
+        <ChakraProvider>
+          <WinboxComponent />
+          <WinboxTabulatorComponent />
+        </ChakraProvider>
       </header>
     </div>
   );
