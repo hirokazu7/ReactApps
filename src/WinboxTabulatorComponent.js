@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import WinBox from "winbox/src/js/winbox";
 import "winbox/dist/css/winbox.min.css";
 import { Button } from "@chakra-ui/react";
@@ -8,6 +8,7 @@ import { Tabulator } from "tabulator-tables";
 
 const WinboxTabulatorComponent = () => {
   const winboxRef = useRef(null);
+  const [filterVisible, setFilterVisible] = useState(false); // 追加: フィルター表示状態の管理
 
   const generateData = (numRecords) => {
     const data = [];
@@ -39,6 +40,7 @@ const WinboxTabulatorComponent = () => {
           "College Diploma",
         ]),
         languages_spoken: faker.random.words(),
+        headerFilter: "input",
       });
     }
     return data;
@@ -54,8 +56,16 @@ const WinboxTabulatorComponent = () => {
         height: "80%",
         x: "center",
         y: "center",
+        mount: document.createElement("div"), // WinBoxにマウントする要素を追加
         onclose: () => (winboxRef.current = null),
       });
+
+      // トグルボタンの追加
+      const toggleButton = document.createElement("button");
+      toggleButton.textContent = "Toggle Filters";
+      toggleButton.onclick = () => setFilterVisible(!filterVisible); // フィルターの表示を切り替える
+      winbox.body.appendChild(toggleButton);
+
       winboxRef.current = winbox;
       new Tabulator(winbox.body.appendChild(document.createElement("div")), {
         data: tableData,
@@ -64,9 +74,17 @@ const WinboxTabulatorComponent = () => {
         height: "500px", // 高さを500pxに設定
         virtualDomHoz: true, // 仮想DOMの水平方向のレンダリングを有効化
         headerFilter: true, // Header Filteringを有効化
+        headerFilter: filterVisible, // フィルター表示状態に基づく
       });
     }
   };
+
+  // トグルボタンの状態が変わるたびにテーブルを再描画
+  useEffect(() => {
+    if (winboxRef.current) {
+      openWinboxWithTabulator();
+    }
+  }, [filterVisible]);
 
   return (
     <div>
