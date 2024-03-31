@@ -36,3 +36,11 @@
     transform: rotate(360deg);
   }
 }
+
+.wb-upload path {
+  fill: white;
+  /* background-size: 20px auto; */
+}
+/* .wb-upload.active {
+  background-image: "upload.svg";
+} */

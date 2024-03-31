@@ -1,96 +1,63 @@
-import React, { useEffect, useRef, useState } from "react";
-import ReactDOM from "react-dom";
-import { Button, Select } from "@chakra-ui/react";
-import "@chakra-ui/react"; // 必要に応じてインポート
+import React, { useRef } from "react";
+import { Button } from "@chakra-ui/react";
+import WinBox from "winbox/src/js/winbox";
 
 const WinboxComponent = () => {
-  const [portalContainer, setPortalContainer] = useState(null);
-  const winboxContainerRef = useRef(null);
-
+  const winboxRef = useRef(null);
   const openWinbox = () => {
-    if (window.WinBox && !portalContainer) {
-      // WinBox ウィンドウのコンテンツ用の一時的な div 要素を作成
-      const div = document.createElement("div");
-      winboxContainerRef.current = div;
-
-      // WinBox ウィンドウを作成
-      new window.WinBox({
-        title: "My Winbox",
-        mount: winboxContainerRef.current, // この div をマウントポイントとして設定
-        width: "400px",
-        height: "400px",
+    if (!winboxRef.current) {
+      const winbox = new WinBox({
+        title: "Tabulator Table in WinBox",
+        width: "80%",
+        height: "80%",
         x: "center",
         y: "center",
-        onclose: () => setPortalContainer(null),
+        mount: document.createElement("div"),
+        onclose: () => (winboxRef.current = null),
       });
 
-      // React ポータルのコンテナとして div をセット
-      setPortalContainer(div);
+      // アイコンボタン（upload.svg）をWinBoxウィンドウに追加
+      winbox.addControl({
+        index: 0, // コントロールの位置を指定
+        class: "wb-upload", // カスタムクラス
+        image: "upload.svg", // アイコンボタンの画像パス
+        click: function (event, winbox) {
+          // ファイルインプット要素を作成
+          const fileInput = document.createElement("input");
+          fileInput.type = "file";
+          fileInput.style.display = "none"; // 要素を非表示にする
+
+          // ファイルが選択されたときのイベントハンドラ
+          fileInput.onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) {
+              return; // ファイルが選択されていない場合は何もしない
+            }
+
+            // ここでファイルに対する操作を行う
+            console.log("Selected file:", file.name);
+
+            // ファイルアップロード処理など、必要に応じてここに実装
+          };
+
+          // ファイル選択ダイアログを開く
+          fileInput.click();
+
+          // 後処理として、input要素をDOMから削除
+          document.body.appendChild(fileInput);
+          fileInput.addEventListener("change", () => {
+            document.body.removeChild(fileInput);
+          });
+        },
+      });
     }
   };
 
   return (
     <div>
       <Button onClick={openWinbox}>Open Winbox</Button>
-      {portalContainer &&
-        ReactDOM.createPortal(
-          <div>
-            <Button colorScheme="blue">Chakra Button</Button>
-            <Select placeholder="Select option">
-              <option value="option1">Option 1</option>
-              <option value="option2">Option 2</option>
-              <option value="option3">Option 3</option>
-            </Select>
-          </div>,
-          portalContainer
-        )}
     </div>
   );
 };
 
 export default WinboxComponent;
-// import React, { useEffect } from "react";
-
-// const WinboxComponent = () => {
-//   useEffect(() => {
-//     // 既に WinBox がロードされているかをチェック
-//     if (window.WinBox) {
-//       return; // WinBox が既にあれば何もしない
-//     }
-
-//     const script = document.createElement("script");
-//     script.src = "/js/winbox.bundle.min.js"; // public/js に配置した場合のパス
-//     script.async = true;
-//     script.onload = () => {
-//       // スクリプトがロードされた後、WinBox を使用できる
-//       console.log("WinBox script loaded");
-//     };
-
-//     document.body.appendChild(script);
-
-//     // スクリプトを削除するクリーンアップ関数
-//     return () => {
-//       document.body.removeChild(script);
-//     };
-//   }, []);
-
-//   const openWinbox = () => {
-//     // スクリプトロード完了を確認
-//     if (window.WinBox) {
-//       const winbox = new window.WinBox({
-//         title: "My Winbox",
-//         html: "<h1>Hello from Winbox!</h1>",
-//         width: "400px",
-//         height: "400px",
-//         x: "center",
-//         y: "center",
-//       });
-//     } else {
-//       console.error("WinBox is not loaded yet.");
-//     }
-//   };
-
-//   return <button onClick={openWinbox}>Open Winbox</button>;
-// };
-
-// export default WinboxComponent;

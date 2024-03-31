@@ -3,7 +3,7 @@ import WinBox from "winbox/src/js/winbox";
 import "winbox/dist/css/winbox.min.css";
 import { Button } from "@chakra-ui/react";
 import { faker } from "@faker-js/faker";
-import "tabulator-tables/dist/css/tabulator_midnight.min.css";
+import "tabulator-tables/dist/css/tabulator_site_dark.css";
 import { Tabulator } from "tabulator-tables";
 
 const WinboxTabulatorComponent = () => {
@@ -56,8 +56,45 @@ const WinboxTabulatorComponent = () => {
         height: "80%",
         x: "center",
         y: "center",
-        mount: document.createElement("div"), // WinBoxにマウントする要素を追加
+        mount: document.createElement("div"),
         onclose: () => (winboxRef.current = null),
+      });
+
+      // アイコンボタン（upload.svg）をWinBoxウィンドウに追加
+      winbox.addControl({
+        index: 0, // コントロールの位置を指定
+        class: "wb-upload", // カスタムクラス
+        image: "upload.svg", // アイコンボタンの画像パス
+        click: function (event, winbox) {
+          // ファイルインプット要素を作成
+          const fileInput = document.createElement("input");
+          fileInput.type = "file";
+          fileInput.style.display = "none"; // 要素を非表示にする
+
+          // ファイルが選択されたときのイベントハンドラ
+          fileInput.onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) {
+              return; // ファイルが選択されていない場合は何もしない
+            }
+
+            // ここでファイルに対する操作を行う
+            console.log("Selected file:", file.name);
+
+            // ファイルアップロード処理など、必要に応じてここに実装
+          };
+
+          // ファイル選択ダイアログを開く
+          fileInput.click();
+
+          // 後処理として、input要素をDOMから削除
+          // 注意: この方法は一部のブラウザではセキュリティ制約により機能しない場合があります
+          // ファイル選択後に要素を削除すると、選択されたファイル情報が失われることがあります
+          document.body.appendChild(fileInput);
+          fileInput.addEventListener("change", () => {
+            document.body.removeChild(fileInput);
+          });
+        },
       });
 
       // トグルボタンの追加
