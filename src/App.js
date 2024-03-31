@@ -11,7 +11,7 @@ function App() {
         <p>Click the button below to open a Winbox window.</p>
         <ChakraProvider>
           <WinboxComponent />
-          <WinboxTabulatorComponent />
+          {/* <WinboxTabulatorComponent /> */}
         </ChakraProvider>
       </header>
     </div>

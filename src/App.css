@@ -44,3 +44,11 @@
 /* .wb-upload.active {
   background-image: "upload.svg";
 } */
+
+.tag {
+  display: inline-block;
+  background-color: #e1e1e1;
+  border-radius: 3px;
+  padding: 2px 4px;
+  margin: 2px;
+}

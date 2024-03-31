@@ -7,7 +7,7 @@ const WinboxComponent = () => {
   const openWinbox = () => {
     if (!winboxRef.current) {
       const winbox = new WinBox({
-        title: "Tabulator Table in WinBox",
+        title: "WinBox",
         width: "80%",
         height: "80%",
         x: "center",

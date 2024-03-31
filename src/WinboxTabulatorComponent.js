@@ -4,11 +4,79 @@ import "winbox/dist/css/winbox.min.css";
 import { Button } from "@chakra-ui/react";
 import { faker } from "@faker-js/faker";
 import "tabulator-tables/dist/css/tabulator_site_dark.css";
-import { Tabulator } from "tabulator-tables";
+import { TabulatorFull as Tabulator } from "tabulator-tables";
 
 const WinboxTabulatorComponent = () => {
   const winboxRef = useRef(null);
-  const [filterVisible, setFilterVisible] = useState(false); // 追加: フィルター表示状態の管理
+  const [filterVisible, setFilterVisible] = useState(false);
+  const [isEditing, setIsEditing] = useState(false); // 編集モードのステート
+  // 編集モードのトグル関数
+  const toggleEdit = () => {
+    setIsEditing(!isEditing);
+  };
+
+  // カスタムエディタ
+  const tagEditor = (cell, onRendered, success, cancel) => {
+    if (!isEditing) {
+      cancel();
+      return;
+    }
+    // エディタのUIとしてdiv要素を作成
+    const editor = document.createElement("div");
+
+    // 既存のタグを表示する関数
+    function updateTagsDisplay() {
+      editor.innerHTML = ""; // 既存の表示をクリア
+      cell.getValue().forEach((tag) => {
+        const tagSpan = document.createElement("span");
+        tagSpan.textContent = tag;
+        tagSpan.classList.add("tag");
+        editor.appendChild(tagSpan);
+      });
+
+      editor.appendChild(input); // 入力フィールドを追加
+      editor.appendChild(addButton); // 追加ボタンを追加
+    }
+
+    // タグを追加する入力フィールド
+    const input = document.createElement("input");
+    input.setAttribute("type", "text");
+    input.style.marginRight = "5px";
+
+    // タグを追加するボタン
+    const addButton = document.createElement("button");
+    addButton.textContent = "+";
+    addButton.onclick = () => {
+      const tagValue = input.value.trim();
+      if (tagValue) {
+        const tags = cell.getValue();
+        tags.push(tagValue);
+        success(tags); // 新しいタグリストをセルに設定
+        input.value = ""; // 入力フィールドをクリア
+        updateTagsDisplay(); // タグの表示を更新
+      }
+    };
+
+    onRendered(() => {
+      input.focus();
+      updateTagsDisplay(); // 初期表示
+    });
+
+    return editor;
+  };
+
+  // 修正後のカスタムフォーマッタ
+  const tagFormatter = (cell) => {
+    return cell
+      .getValue()
+      .map((tag) => `<span class="tag">${tag}</span>`)
+      .join("");
+  };
+
+  // Tabulatorの初期化部分などその他のコードは変更なし
+
+  // スタイル（CSS）の追加が必要
+  // .tag { /* タグのスタイル定義 */ }
 
   const generateData = (numRecords) => {
     const data = [];
@@ -25,7 +93,7 @@ const WinboxTabulatorComponent = () => {
           .toLocaleDateString("en-GB"),
         email: faker.internet.email(),
         phone: faker.phone.number(),
-        job: faker.name.jobTitle(),
+        job: [faker.name.jobTitle()], // job を配列で初期化
         company: faker.company.bs(), // 修正済み
         height: faker.datatype.number({ min: 150, max: 200 }),
         weight: faker.datatype.number({ min: 50, max: 100 }),
@@ -40,7 +108,6 @@ const WinboxTabulatorComponent = () => {
           "College Diploma",
         ]),
         languages_spoken: faker.random.words(),
-        headerFilter: "input",
       });
     }
     return data;
@@ -60,68 +127,95 @@ const WinboxTabulatorComponent = () => {
         onclose: () => (winboxRef.current = null),
       });
 
-      // アイコンボタン（upload.svg）をWinBoxウィンドウに追加
-      winbox.addControl({
-        index: 0, // コントロールの位置を指定
-        class: "wb-upload", // カスタムクラス
-        image: "upload.svg", // アイコンボタンの画像パス
-        click: function (event, winbox) {
-          // ファイルインプット要素を作成
-          const fileInput = document.createElement("input");
-          fileInput.type = "file";
-          fileInput.style.display = "none"; // 要素を非表示にする
-
-          // ファイルが選択されたときのイベントハンドラ
-          fileInput.onchange = (e) => {
-            const file = e.target.files[0];
-            if (!file) {
-              return; // ファイルが選択されていない場合は何もしない
-            }
-
-            // ここでファイルに対する操作を行う
-            console.log("Selected file:", file.name);
-
-            // ファイルアップロード処理など、必要に応じてここに実装
-          };
-
-          // ファイル選択ダイアログを開く
-          fileInput.click();
-
-          // 後処理として、input要素をDOMから削除
-          // 注意: この方法は一部のブラウザではセキュリティ制約により機能しない場合があります
-          // ファイル選択後に要素を削除すると、選択されたファイル情報が失われることがあります
-          document.body.appendChild(fileInput);
-          fileInput.addEventListener("change", () => {
-            document.body.removeChild(fileInput);
-          });
-        },
-      });
-
-      // トグルボタンの追加
-      const toggleButton = document.createElement("button");
-      toggleButton.textContent = "Toggle Filters";
-      toggleButton.onclick = () => setFilterVisible(!filterVisible); // フィルターの表示を切り替える
-      winbox.body.appendChild(toggleButton);
-
       winboxRef.current = winbox;
       new Tabulator(winbox.body.appendChild(document.createElement("div")), {
         data: tableData,
-        autoColumns: true,
-        // layout: "fitColumns", // フィットカラムレイアウトを使用
-        height: "500px", // 高さを500pxに設定
-        virtualDomHoz: true, // 仮想DOMの水平方向のレンダリングを有効化
-        headerFilter: true, // Header Filteringを有効化
-        headerFilter: filterVisible, // フィルター表示状態に基づく
+        height: "500px",
+        layout: "fitData",
+        columns: [
+          { title: "ID", field: "id", sorter: "number", headerFilter: "input" },
+          { title: "Name", field: "name", headerFilter: "input" },
+          { title: "Location", field: "location", headerFilter: "input" },
+          {
+            title: "Gender",
+            field: "gender",
+            headerFilter: "select",
+            headerFilterParams: { values: ["male", "female", "other"] },
+          },
+          {
+            title: "Rating",
+            field: "rating",
+            sorter: "number",
+            headerFilter: "input",
+          },
+          { title: "Color", field: "col", headerFilter: "input" },
+          {
+            title: "Date of Birth",
+            field: "dob",
+            sorter: "date",
+            headerFilter: "input",
+          },
+          { title: "Email", field: "email", headerFilter: "input" },
+          { title: "Phone", field: "phone", headerFilter: "input" },
+          {
+            title: "Job",
+            field: "job",
+            editor: tagEditor,
+            formatter: tagFormatter,
+            headerFilter: "input",
+            cellClick: (e, cell) => {
+              toggleEdit();
+            },
+          },
+          { title: "Company", field: "company", headerFilter: "input" },
+          {
+            title: "Height",
+            field: "height",
+            sorter: "number",
+            headerFilter: "input",
+          },
+          {
+            title: "Weight",
+            field: "weight",
+            sorter: "number",
+            headerFilter: "input",
+          },
+          { title: "Eye Color", field: "eye_color", headerFilter: "input" },
+          { title: "Hair Color", field: "hair_color", headerFilter: "input" },
+          { title: "Hobbies", field: "hobbies", headerFilter: "input" },
+          {
+            title: "Favorite Food",
+            field: "favorite_food",
+            headerFilter: "input",
+          },
+          {
+            title: "Favorite Movie",
+            field: "favorite_movie",
+            headerFilter: "input",
+          },
+          {
+            title: "Education Level",
+            field: "education_level",
+            headerFilter: "select",
+            headerFilterParams: {
+              values: ["Bachelor's Degree", "Master's Degree", "PhD"],
+            },
+          },
+          {
+            title: "Languages Spoken",
+            field: "languages_spoken",
+            headerFilter: "input",
+          },
+        ],
       });
     }
   };
 
-  // トグルボタンの状態が変わるたびにテーブルを再描画
   useEffect(() => {
     if (winboxRef.current) {
       openWinboxWithTabulator();
     }
-  }, [filterVisible]);
+  }, [filterVisible, isEditing]); // 依存配列に isEditing を追加
 
   return (
     <div>
